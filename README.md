@@ -4,7 +4,7 @@
 
 每一輪給你兩段文字——一段真人寫的，一段 AI 生成的。憑直覺猜，看你識破幾題。
 
-🎮 **[點這裡玩遊戲](https://hsini109.github.io/lie-detector-game/)**
+🎮 **[點這裡玩遊戲](https://phy548.github.io/lie-detector-game/)**
 
 ---
 

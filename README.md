@@ -32,7 +32,7 @@
 ```
 真人文字（朋友手寫）
         +
-Groq API 生成 AI 文字          ← lie_detector_v3.ipynb 第 1–7 格
+Groq API 生成 AI 文字          ← lie_detector_v4.ipynb 第 1–7 格
         ↓
 questions.json 題庫
         ↓
@@ -40,7 +40,7 @@ index.html 遊戲（GitHub Pages）
         ↓
 玩家答題 → 自動送出數據 → Google Sheets
         ↓
-Python 讀取數據、產生圖表       ← lie_detector_v3.ipynb 第 8–12 格
+Python 讀取數據、產生圖表       ← lie_detector_v4.ipynb 第 8–12 格
 ```
 
 ---

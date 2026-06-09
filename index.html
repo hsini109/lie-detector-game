@@ -552,9 +552,8 @@
       const endScreen = document.getElementById('end-screen');
       endScreen.classList.add('show');
       
-      // 🌟 新增這兩行：在結算畫面時，手動把進度條填滿到 100%
-      document.getElementById('progress-fill').style.width = '100%';
-      document.getElementById('progress-pct').textContent = '100%';
+     // 🌟 刪除剛才那兩行 100% 的程式碼，改成這行：直接把進度條整個隱藏起來！
+      document.querySelector('.progress-bar-wrap').style.display = 'none';
 
       // 準備打包資料並送出
       gameResults['timestamp'] = new Date().toLocaleString();
@@ -600,6 +599,8 @@
 
     function restartGame() {
       document.getElementById('end-screen').classList.remove('show');
+      // 🌟 新增這行：重新開始遊戲時，把進度條顯示回來
+      document.querySelector('.progress-bar-wrap').style.display = 'block';
       loadQuestions();
     }
 

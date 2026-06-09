@@ -71,9 +71,13 @@
       font-weight: 900;
       letter-spacing: -0.02em;
       line-height: 1.1;
+      color: var(--text);
     }
 
-    .hero h1 em { font-style: normal; color: var(--accent); }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--accent);
+    }
 
     .hero p {
       margin-top: 12px;
@@ -125,15 +129,6 @@
       letter-spacing: 0.1em;
     }
 
-    .error-state {
-      text-align: center;
-      padding: 60px 0;
-      color: var(--red);
-      font-family: 'Space Mono', monospace;
-      font-size: 0.85rem;
-      line-height: 1.8;
-    }
-
     .topic-label {
       font-family: 'Space Mono', monospace;
       font-size: 0.7rem;
@@ -146,6 +141,7 @@
     .topic-text {
       font-size: 1.3rem;
       font-weight: 700;
+      color: var(--text);
       margin-bottom: 28px;
       line-height: 1.4;
       padding-bottom: 20px;
@@ -234,10 +230,11 @@
       gap: 16px;
     }
 
+    /* 加大字體的提示文字 */
     .hint {
       font-family: 'Space Mono', monospace;
-      font-size: 1.1rem;
-      color: var(--text);
+      font-size: 1.1rem; 
+      color: var(--text); 
       margin-bottom: 10px;
     }
 
@@ -323,6 +320,15 @@
 
     .btn-restart { background: var(--accent); color: #0e0e0e; }
     .btn-restart:hover { background: #f0e0b0; }
+
+    .error-state {
+      text-align: center;
+      padding: 60px 0;
+      color: var(--red);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
 
     .corner-deco {
       position: fixed;
@@ -411,11 +417,6 @@
 
   <script>
     // ================================================
-    // Google Apps Script 網址（自動收集玩家數據用）
-    // ================================================
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxlmxd9lD3Jg6ZDVclYzn9ACdSCb3uB_98Dzz0Oi7zzraBPHozLLnShBpRdSchw-a9y/exec';
-
-    // ================================================
     // 全域變數
     // ================================================
     let QUESTIONS = [];
@@ -425,20 +426,25 @@
     let selectedCard = null;
     let roundOrder = [];
     let answered = false;
-    let playerAnswers = [];  // 記錄每題對錯，用於送出數據
+    let gameResults = {}; // 🌟 用來記錄玩家這局抽到的題目與對錯
 
     // ================================================
-    // 讀取 questions.json，隨機抽 5 題
+    // 讀取外部 questions.json 並隨機抽 5 題
     // ================================================
     async function loadQuestions() {
       try {
         const res = await fetch('questions.json');
         if (!res.ok) throw new Error('無法讀取 questions.json');
-
+        
         let allQuestions = await res.json();
+
+        // 將題目順序隨機打亂 (洗牌)
         allQuestions.sort(() => Math.random() - 0.5);
+
+        // 只截取前 5 題作為本次遊戲的內容
         QUESTIONS = allQuestions.slice(0, 5);
 
+        // 根據抽出的 5 題，建立模擬的全站統計
         SITE_STATS = QUESTIONS.map(() => ({
           correct: Math.floor(Math.random() * 200) + 200,
           total:   Math.floor(Math.random() * 200) + 400
@@ -458,7 +464,7 @@
     function startGame() {
       currentRound = 0;
       correctCount = 0;
-      playerAnswers = [];
+      gameResults = {}; // 每次新遊戲開始時清空紀錄
       roundOrder = QUESTIONS.map(() => Math.random() > 0.5 ? 'A' : 'B');
       loadRound();
     }
@@ -519,7 +525,9 @@
       const isCorrect = selectedCard === correctAnswer;
 
       if (isCorrect) correctCount++;
-      playerAnswers.push(isCorrect ? 1 : 0);  // 記錄這題對錯
+      
+      // 🌟 把這題的「主題名稱」當作 Key，答對存 1，答錯存 0
+      gameResults[QUESTIONS[currentRound].topic] = isCorrect ? 1 : 0;
 
       const correctCardId = correctAnswer === 'A' ? 'card-a' : 'card-b';
       const wrongCardId   = correctAnswer === 'A' ? 'card-b' : 'card-a';
@@ -563,32 +571,25 @@
       loadRound();
     }
 
-    // ================================================
-    // 送出數據到 Google Sheets
-    // ================================================
-    function sendToSheets() {
-      const result = { total_correct: correctCount };
-      for (let i = 0; i < playerAnswers.length; i++) {
-        result['Q' + (i + 1)] = playerAnswers[i];
-      }
-
-      fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result)
-      }).catch(err => console.log('數據送出失敗：' + err));
-    }
-
-    // ================================================
-    // 結算畫面（送出數據）
-    // ================================================
     function showEndScreen() {
       document.getElementById('game-area').style.display = 'none';
-      document.getElementById('end-screen').classList.add('show');
+      const endScreen = document.getElementById('end-screen');
+      endScreen.classList.add('show');
 
-      // 自動送出數據到 Google Sheets
-      sendToSheets();
+      // 🌟 準備打包資料並送出
+      gameResults['timestamp'] = new Date().toLocaleString();
+      gameResults['total_correct'] = correctCount;
+      
+      const scriptURL = 'https://script.google.com/macros/s/AKfycbxlmxd9lD3Jg6ZDVclYzn9ACdSCb3uB_98Dzz0Oi7zzraBPHozLLnShBpRdSchw-a9y/exec';
+      
+      fetch(scriptURL, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(gameResults)
+      }).then(() => {
+          console.log('數據成功送出至 Google Sheets!');
+      }).catch(error => console.error('數據送出失敗!', error));
 
       const total = QUESTIONS.length;
       document.getElementById('end-score').textContent = correctCount + ' / ' + total;
@@ -634,6 +635,9 @@
       document.getElementById('total-display').textContent = currentRound + (answered ? 1 : 0);
     }
 
+    // ================================================
+    // 啟動：讀取 questions.json
+    // ================================================
     window.onload = () => {
       setTimeout(loadQuestions, 600);
     };
